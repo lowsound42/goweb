@@ -22,8 +22,9 @@ func main() {
 		views.Must(views.ParseFS(templates.FS, "faq.tmpl", "tailwind.tmpl"))))
 
 	var usersC controllers.Users
-	usersC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.tmpl", "tailwind.tmpl"))
+	usersC.Templates.View = views.Must(views.ParseFS(templates.FS, "signup.tmpl", "tailwind.tmpl"))
 	r.Get("/signup", usersC.New)
+	r.Post("/signup", usersC.Create)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})

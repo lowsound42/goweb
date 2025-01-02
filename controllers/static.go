@@ -3,11 +3,9 @@ package controllers
 import (
 	"html/template"
 	"net/http"
-
-	"github.com/lowsound42/goweb/views"
 )
 
-func FAQ(tpl views.Template) http.HandlerFunc {
+func FAQ(tpl Executor) http.HandlerFunc {
 	questions := []struct {
 		Question string
 		Answer   template.HTML
@@ -30,7 +28,7 @@ func FAQ(tpl views.Template) http.HandlerFunc {
 	}
 }
 
-func StaticHandler(tpl views.Template) http.HandlerFunc {
+func StaticHandler(tpl Executor) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		tpl.Execute(w, nil)
 	}
