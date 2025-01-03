@@ -9,17 +9,26 @@ import (
 
 type Users struct {
 	Templates struct {
-		View Executor
+		SignUp Executor
+		SignIn Executor
 	}
 	UserService *models.UserService
 }
 
-func (u *Users) View(w http.ResponseWriter, r *http.Request) {
+func (u *Users) SignUp(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
 	}
 	data.Email = r.FormValue("email")
-	u.Templates.View.Execute(w, data)
+	u.Templates.SignUp.Execute(w, data)
+}
+
+func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	u.Templates.SignIn.Execute(w, data)
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {

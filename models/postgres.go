@@ -20,17 +20,6 @@ func (cfg PostgresConfig) String() string {
 	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database, cfg.SSLMode)
 }
 
-func DefaultPostgresConfig() PostgresConfig {
-	return PostgresConfig{
-		Host:     "100.124.32.106",
-		Port:     "5432",
-		User:     "lowsound",
-		Password: "lowsound",
-		Database: "goweb",
-		SSLMode:  "disable",
-	}
-}
-
 // Open will open a SQL connection with the provided
 // Postgres database. Callers of Open need to ensure
 // the connection is eventually closed via the
