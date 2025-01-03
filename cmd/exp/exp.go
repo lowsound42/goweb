@@ -1,43 +1,31 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/lowsound42/goweb/models"
 )
 
-type PostgresConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Database string
-	SSLMode  string
-}
-
-func (cfg PostgresConfig) String() string {
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s", cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database, cfg.SSLMode)
-}
-
 func main() {
-	cfg := PostgresConfig{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "lowsound",
-		Password: "lowsound",
-		Database: "goweb",
-		SSLMode:  "disable",
-	}
-	db, err := sql.Open("pgx", cfg.String())
+	cfg := models.DefaultPostgresConfig()
+	db, err := models.Open(cfg)
 	if err != nil {
 		panic(err)
 	}
+	defer db.Close()
+
 	err = db.Ping()
 	if err != nil {
 		panic(err)
 	}
-
 	fmt.Println("Connected!")
-	defer db.Close()
+
+	us := models.UserService{
+		DB: db,
+	}
+	user, err := us.Create("bob4@bob.com", "bob123")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(user)
 }
