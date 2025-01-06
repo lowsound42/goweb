@@ -7,6 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/csrf"
 	"github.com/lowsound42/goweb/controllers"
+	"github.com/lowsound42/goweb/migrations"
 	"github.com/lowsound42/goweb/models"
 	"github.com/lowsound42/goweb/templates"
 	"github.com/lowsound42/goweb/views"
@@ -27,6 +28,11 @@ func main() {
 		panic(err)
 	}
 	defer db.Close()
+
+	err = models.MigrateFS(db, migrations.FS, ".")
+	if err != nil {
+		panic(err)
+	}
 
 	// Setup our model services
 	userService := models.UserService{
