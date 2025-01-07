@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/lowsound42/goweb/context"
 	"github.com/lowsound42/goweb/models"
 )
+
+type UserMiddleware struct {
+	SessionService *models.SessionService
+}
 
 type Users struct {
 	Templates struct {
@@ -81,16 +86,9 @@ func (u *Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	token, err := readCookie(r, CookieSession)
+	user := context.User(r.Context())
 
-	if err != nil {
-		fmt.Println(err)
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
-	user, err := u.SessionService.User(token)
-	if err != nil {
-		fmt.Println(err)
+	if user == nil {
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
@@ -116,4 +114,37 @@ func (u *Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
 
 	deleteCookie(w, CookieSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
+}
+
+func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := readCookie(r, CookieSession)
+		if err != nil {
+			// Cannot lookup the user with no cookie, so proceed without a user being
+			// set, then return.
+			next.ServeHTTP(w, r)
+			return
+		}
+		user, err := umw.SessionService.User(token)
+		if err != nil {
+			// Invalid or expired token. In either case we can still proceed, we just
+			// cannot set a user.
+			next.ServeHTTP(w, r)
+			return
+		}
+		// If we get to this point, we have a user that we can store in the context!
+		// Get the context
+		ctx := r.Context()
+		// We need to derive a new context to store values in it. Be certain that
+		// we import our own context package, and not the one from the standard
+		// library.
+		ctx = context.WithUser(ctx, user)
+		// Next we need to get a request that uses our new context. This is done
+		// in a way similar to how contexts work - we call a WithContext function
+		// and it returns us a new request with the context set.
+		r = r.WithContext(ctx)
+		// Finally we call the handler that our middleware was applied to with the
+		// updated request.
+		next.ServeHTTP(w, r)
+	})
 }

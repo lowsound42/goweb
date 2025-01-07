@@ -15,11 +15,6 @@ import (
 
 func main() {
 	r := chi.NewRouter()
-	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
-	csrfMw := csrf.Protect(
-		[]byte(csrfKey),
-		csrf.Secure(false),
-	)
 
 	// Setup a database connection
 	cfg := models.DefaultPostgresConfig()
@@ -67,6 +62,16 @@ func main() {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
+	umw := controllers.UserMiddleware{
+		SessionService: &sessionService,
+	}
+
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false),
+	)
+
 	fmt.Println("Ahoy matey, we be sailin' on port :3000")
-	http.ListenAndServe(":3000", csrfMw(r))
+	http.ListenAndServe(":3000", csrfMw(umw.SetUser(r)))
 }
