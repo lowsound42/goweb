@@ -36,13 +36,32 @@ func main() {
 	sessionService := models.SessionService{
 		DB: db,
 	}
+
 	// Setup our controllers
 	usersC := controllers.Users{
 		UserService:    &userService,
 		SessionService: &sessionService,
 	}
 
-	r.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "home.tmpl", "tailwind.tmpl"))))
+	umw := controllers.UserMiddleware{
+		SessionService: &sessionService,
+	}
+
+	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		csrf.Secure(false),
+	)
+
+	// These middleware are used everywhere.
+	r.Use(csrfMw)
+	r.Use(umw.SetUser)
+
+	// Now we set up routes.
+	r.Get("/", controllers.StaticHandler(views.Must(views.ParseFS(
+		templates.FS,
+		"home.tmpl", "tailwind.tmpl",
+	))))
 	r.Get("/contact", controllers.StaticHandler(views.Must(views.ParseFS(templates.FS, "contact.tmpl", "tailwind.tmpl"))))
 	r.Get("/signup", controllers.StaticHandler(
 		views.Must(views.ParseFS(templates.FS, "signup.tmpl", "tailwind.tmpl")),
@@ -62,16 +81,6 @@ func main() {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
 
-	umw := controllers.UserMiddleware{
-		SessionService: &sessionService,
-	}
-
-	csrfKey := "gFvi45R4fy5xNBlnEeZtQbfAVCYEIAUX"
-	csrfMw := csrf.Protect(
-		[]byte(csrfKey),
-		csrf.Secure(false),
-	)
-
 	fmt.Println("Ahoy matey, we be sailin' on port :3000")
-	http.ListenAndServe(":3000", csrfMw(umw.SetUser(r)))
+	http.ListenAndServe(":3000", r)
 }

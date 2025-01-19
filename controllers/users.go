@@ -85,15 +85,10 @@ func (u *Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "User authenticated: %+v", user)
 }
 
-func (u *Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
+// SetUser and RequireUser middleware are required.
+func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	user := context.User(r.Context())
-
-	if user == nil {
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
 	fmt.Fprintf(w, "Current user: %s\n", user.Email)
-
 }
 
 func (u *Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
@@ -114,6 +109,17 @@ func (u *Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
 
 	deleteCookie(w, CookieSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
+}
+
+func (umw UserMiddleware) RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := context.User(r.Context())
+		if user == nil {
+			http.Redirect(w, r, "/signin", http.StatusFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
