@@ -30,12 +30,14 @@
         </div>
 
         <div class="space-x-4">
+          {{if currentUser}}
           <form action="/signout" method="post" class="inline pr-4">
             <div class="hidden">
               {{ csrfField }}
             </div>
             <button type="submit">Sign out</button>
           </form>
+          {{else}}
           <a href="/signin">Sign in</a>
           <a
             href="/signup"
@@ -43,6 +45,7 @@
           >
             Sign up
           </a>
+          {{ end }}
         </div>
       </nav>
     </header>

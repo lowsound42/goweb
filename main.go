@@ -15,7 +15,6 @@ import (
 
 func main() {
 	r := chi.NewRouter()
-
 	// Setup a database connection
 	cfg := models.DefaultPostgresConfig()
 	db, err := models.Open(cfg)
@@ -71,12 +70,19 @@ func main() {
 
 	usersC.Templates.SignUp = views.Must(views.ParseFS(templates.FS, "signup.tmpl", "tailwind.tmpl"))
 	usersC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "signin.tmpl", "tailwind.tmpl"))
+	usersC.Templates.ForgotPassword = views.Must(views.ParseFS(
+		templates.FS,
+		"forgot-pw.tmpl", "tailwind.tmpl",
+	))
+
 	r.Get("/signin", usersC.SignIn)
 	r.Get("/signup", usersC.SignUp)
 	r.Post("/signup", usersC.Create)
 	r.Post("/signin", usersC.ProcessSignIn)
 	r.Get("/users/me", usersC.CurrentUser)
 	r.Post("/signout", usersC.ProcessSignOut)
+	r.Get("/forgot-pw", usersC.ForgotPassword)
+	r.Post("/forgot-pw", usersC.ProcessForgotPassword)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})

@@ -3,6 +3,7 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/lowsound42/goweb/context"
 	"github.com/lowsound42/goweb/models"
@@ -14,11 +15,15 @@ type UserMiddleware struct {
 
 type Users struct {
 	Templates struct {
-		SignUp Executor
-		SignIn Executor
+		SignUp         Executor
+		SignIn         Executor
+		ForgotPassword Executor
+		CheckYourEmail Executor
 	}
-	UserService    *models.UserService
-	SessionService *models.SessionService
+	UserService          *models.UserService
+	SessionService       *models.SessionService
+	PasswordResetService *models.PasswordResetService
+	EmailService         *models.EmailService
 }
 
 func (u *Users) SignUp(w http.ResponseWriter, r *http.Request) {
@@ -35,6 +40,14 @@ func (u *Users) SignIn(w http.ResponseWriter, r *http.Request) {
 	}
 	data.Email = r.FormValue("email")
 	u.Templates.SignIn.Execute(w, r, data)
+}
+
+func (u Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	u.Templates.ForgotPassword.Execute(w, r, data)
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
@@ -153,4 +166,31 @@ func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
 		// updated request.
 		next.ServeHTTP(w, r)
 	})
+}
+
+func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+	data.Email = r.FormValue("email")
+	pwReset, err := u.PasswordResetService.Create(data.Email)
+	if err != nil {
+		// TODO: Handle other cases in the future. For instance,
+		// if a user doesn't exist with the email address.
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+	vals := url.Values{
+		"token": {pwReset.Token},
+	}
+	// TODO: Make the URL here configurable
+	resetURL := "https://www.lenslocked.com/reset-pw?" + vals.Encode()
+	err = u.EmailService.ForgotPassword(data.Email, resetURL)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
+		return
+	}
+	u.Templates.CheckYourEmail.Execute(w, r, data)
 }
