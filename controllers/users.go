@@ -169,7 +169,8 @@ func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
 	})
 }
 
-func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
+func (u *Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
+	println("wowowowowowwowo")
 	var data struct {
 		Email string
 	}
@@ -193,6 +194,10 @@ func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
 		return
 	}
+
+	// Don't render the token here! We need them to confirm they have access to
+	// their email to get the token. Sharing it here would be a massive security
+	// hole.
 	u.Templates.CheckYourEmail.Execute(w, r, data)
 }
 
