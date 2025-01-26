@@ -74,7 +74,10 @@ func main() {
 		templates.FS,
 		"forgot-pw.tmpl", "tailwind.tmpl",
 	))
-
+	usersC.Templates.ResetPassword = views.Must(views.ParseFS(
+		templates.FS,
+		"reset-pw.tmpl", "tailwind.tmpl",
+	))
 	r.Get("/signin", usersC.SignIn)
 	r.Get("/signup", usersC.SignUp)
 	r.Post("/signup", usersC.Create)
@@ -83,6 +86,8 @@ func main() {
 	r.Post("/signout", usersC.ProcessSignOut)
 	r.Get("/forgot-pw", usersC.ForgotPassword)
 	r.Post("/forgot-pw", usersC.ProcessForgotPassword)
+	r.Get("/reset-pw", usersC.ResetPassword)
+	r.Post("/reset-pw", usersC.ProcessResetPassword)
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Page not found", http.StatusNotFound)
 	})
