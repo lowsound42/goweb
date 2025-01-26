@@ -6,6 +6,7 @@ import (
 	"net/url"
 
 	"github.com/lowsound42/goweb/context"
+	"github.com/lowsound42/goweb/errors"
 	"github.com/lowsound42/goweb/models"
 )
 
@@ -52,13 +53,18 @@ func (u Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	user, err := u.UserService.Create(email, password)
+	var data struct {
+		Email    string
+		Password string
+	}
+	data.Email = r.FormValue("email")
+	data.Password = r.FormValue("password")
+	user, err := u.UserService.Create(data.Email, data.Password)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong.", http.StatusInternalServerError)
-		return
+		if errors.Is(err, models.ErrEmailTaken) {
+			err = errors.Public(err, "That email address is already associated with an account.")
+		}
+		u.Templates.SignUp.Execute(w, r, data, err)
 	}
 	session, err := u.SessionService.Create(user.ID)
 	if err != nil {
@@ -170,7 +176,6 @@ func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
 }
 
 func (u *Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
-	println("wowowowowowwowo")
 	var data struct {
 		Email string
 	}

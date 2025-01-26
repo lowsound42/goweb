@@ -46,12 +46,10 @@ func (service *PasswordResetService) Create(email string) (*PasswordReset, error
 	email = strings.ToLower(email)
 
 	var userID int
-	println("userIDq1q323e23r")
 	row := service.DB.QueryRow(`
 		SELECT id FROM users WHERE email=$1;`, email)
 
 	err := row.Scan(&userID)
-	println("userID")
 
 	if err != nil {
 		// TODO: Consider returning a specific error when the user does not exist.
